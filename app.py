@@ -3,9 +3,9 @@ import pandas as pd
 import os
 
 app = Flask(__name__)
-app.secret_key = "your_secret_key"  # Needed for flash messages
+app.secret_key = "resume_screening_secret"
 
-# Skill dictionary
+# ================= SKILL DICTIONARY =================
 job_skills = {
 
     # ================= TECH =================
@@ -30,8 +30,8 @@ job_skills = {
     ],
 
     "AI Engineer": [
-        "artificial intelligence", "deep learning", "python",
-        "neural networks", "tensorflow", "pytorch"
+        "artificial intelligence", "deep learning",
+        "python", "neural networks", "tensorflow", "pytorch"
     ],
 
     # ================= HEALTHCARE =================
@@ -134,7 +134,7 @@ job_skills = {
         "research", "communication", "ethics"
     ],
 
-    # ================= SCIENCE & ENGINEERING =================
+    # ================= ENGINEERING =================
     "Architect": [
         "autocad", "design", "planning",
         "construction", "3d modeling"
@@ -155,7 +155,7 @@ job_skills = {
         "power systems", "maintenance"
     ],
 
-    # ================= GOVERNMENT & SERVICES =================
+    # ================= GOVERNMENT =================
     "Government Officer": [
         "administration", "public service",
         "policy implementation", "communication"
@@ -172,34 +172,32 @@ job_skills = {
     ]
 }
 
-# CSV file path
-csv_file = "data.csv"
+# ================= CSV (CLOUD SAFE) =================
+DATA_FILE = "/tmp/data.csv"
 
-# Create CSV if not exists or add missing columns
-if not os.path.exists(csv_file):
-    df = pd.DataFrame(columns=["skills", "education", "experience", "projects", "job_role", "score"])
-    df.to_csv(csv_file, index=False)
-else:
-    df = pd.read_csv(csv_file)
-    # Ensure all required columns exist
-    for col in ["skills", "education", "experience", "projects", "job_role", "score"]:
-        if col not in df.columns:
-            df[col] = ""
+COLUMNS = [
+    "skills", "education", "experience",
+    "projects", "job_role", "score"
+]
 
+if not os.path.exists(DATA_FILE):
+    pd.DataFrame(columns=COLUMNS).to_csv(DATA_FILE, index=False)
+
+# ================= LOGIC =================
 def calculate_match(text, role):
-    skills = job_skills[role]
+    skills = job_skills.get(role, [])
     matched = [s for s in skills if s in text]
-    score = (len(matched) / len(skills)) * 100
+    score = (len(matched) / len(skills)) * 100 if skills else 0
     return round(score, 2), matched
 
 @app.route("/", methods=["GET", "POST"])
 def index():
     result = None
+
     if request.method == "POST":
-        # Check consent
-        consent = request.form.get("consent")
-        if not consent:
-            flash("You must accept the note to submit the form.")
+
+        if not request.form.get("consent"):
+            flash("Please read and accept the note before submitting.")
             return redirect(url_for("index"))
 
         skills = request.form["skills"].lower()
@@ -211,31 +209,18 @@ def index():
         combined_text = skills + " " + education
         score, matched = calculate_match(combined_text, job_role)
 
-        # Save primary data
-        new_row = {
-            "skills": skills,
-            "education": education,
-            "experience": experience,
-            "projects": projects,
-            "job_role": job_role,
-            "score": score
-        }
+        df = pd.read_csv(DATA_FILE)
+        df.loc[len(df)] = [
+            skills, education, experience,
+            projects, job_role, score
+        ]
+        df.to_csv(DATA_FILE, index=False)
 
-        df = pd.read_csv(csv_file)
-        # Add missing columns if any
-        for col in ["skills", "education", "experience", "projects", "job_role", "score"]:
-            if col not in df.columns:
-                df[col] = ""
-        df.loc[len(df)] = new_row
-        df.to_csv(csv_file, index=False)
-
-        # Determine status
-        if score >= 70:
-            status = "✅ Good Match"
-        elif score >= 40:
-            status = "⚠️ Partial Match"
-        else:
-            status = "❌ Not Suitable"
+        status = (
+            "✅ Good Match" if score >= 70 else
+            "⚠️ Partial Match" if score >= 40 else
+            "❌ Not Suitable"
+        )
 
         result = {
             "score": score,
