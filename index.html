@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Resume Screening System</title>
+    <style>
+        body { font-family: Arial; background: #f4f4f4; }
+        .container {
+            width: 400px;
+            background: white;
+            padding: 20px;
+            margin: auto;
+            margin-top: 50px;
+            border-radius: 10px;
+        }
+        input, textarea, select {
+            width: 100%;
+            margin-top: 10px;
+            padding: 8px;
+        }
+        button {
+            margin-top: 15px;
+            padding: 10px;
+            width: 100%;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .flash-message {
+            color: green;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Resume Screening Form</h2>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="flash-message">
+          {% for message in messages %}
+            <p>{{ message }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST">
+        <label>Job Role</label>
+        <select name="job_role" required>
+            <option>Cyber Security Analyst</option>
+            <option>AI Engineer</option>
+            <option>Doctor</option>
+            <option>Pharmacist</option>
+            <option>Physiotherapist</option>
+            <option>Professor</option>
+            <option>School Counselor</option>
+            <option>Sales Executive</option>
+            <option>Human Resource Manager</option>
+            <option>UI/UX Designer</option>
+            <option>Content Writer</option>
+            <option>Lawyer</option>
+            <option>Journalist</option>
+            <option>Civil Engineer</option>
+            <option>Mechanical Engineer</option>
+            <option>Electrical Engineer</option>
+            <option>Government Officer</option>
+            <option>Police Officer</option>
+            <option>Defence Personnel</option>
+        </select>
+
+        <label>Skills</label>
+        <textarea name="skills" placeholder="Python, SQL, ML..." required></textarea>
+
+        <label>Education</label>
+        <input type="text" name="education" placeholder="B.Sc Computer Science" required>
+
+        <label>Experience (Years)</label>
+        <input type="number" name="experience" min="0" required>
+
+        <label>Number of Projects/Internships Done</label>
+        <input type="number" name="projects" min="0" required>
+
+        <label>
+            <input type="checkbox" name="consent" required>
+            I acknowledge that my data will be stored and used only for resume screening purposes.
+        </label>
+
+        <button type="submit">Check Suitability</button>
+    </form>
+
+    {% if result %}
+        <hr>
+        <h3>Result</h3>
+        <p><b>Match Score:</b> {{ result.score }}%</p>
+        <p><b>Status:</b> {{ result.status }}</p>
+        <p><b>Matched Skills:</b> {{ result.matched }}</p>
+        <p><b>Projects/Internships Done:</b> {{ result.projects }}</p>
+    {% endif %}
+</div>
+
+</body>
+</html>
